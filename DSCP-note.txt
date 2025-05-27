@@ -1,0 +1,13 @@
+Research Objectives:
+Explore and understand the structure and accessibility of the NIED earthquake dataset.
+Collect and preprocess earthquake data, including temporal, spatial, and magnitude attributes.
+Develop visualizations to represent the spatial and temporal distribution of earthquakes in Japan.
+Identify patterns or trends in earthquake frequency and intensity over time.
+
+
+Research Questions:
+What is the structure of the earthquake data provided by the NIED platform?
+How frequently do earthquakes occur in different regions of Japan?
+How does earthquake magnitude vary across time and geographic locations?
+Can visual patterns reveal insights into regional seismic activity?
+What visualization techniques are most effective for representing spatial and temporal earthquake data?

@@ -1,0 +1,87 @@
+#+title: K-NET Binary Format Specification
+#+author: NIED (translated)
+#+date: 2025-04-21
+#+options: toc:nil
+
+* Introduction
+K-NET Binary format is a part of the Strong Motion WIN32 format defined by NIED.
+It extends the WIN32 format to facilitate the distribution of strong-motion data by introducing "information blocks" beyond seismic waveform data.
+
+* Data Structure
+** WIN32 Format Structure
+- WIN32 Header (4 bytes)
+- Second Blocks (variable length)
+- Repeating Second Blocks
+
+** Strong Motion WIN32 Format Structure
+- Strong Motion WIN32 Header (4 bytes)
+- Second or Information Blocks (variable length)
+- Repeating Second or Information Blocks
+
+* K-NET Binary Format (for K-NET Observation Points)
+
+** Strong Motion WIN32 Header Block
+| No. | Item          | Size | Type | Description |
+|-----+---------------+------+------+-------------|
+|   1 | Format ID     | 8bit | -    |        0x0A |
+|   2 | Format Sub ID | 8bit | -    |        0x02 |
+|   3 | Reserved      | 8bit | -    |        0x00 |
+|   4 | Reserved      | 8bit | -    |        0x00 |
+
+** Information Block Header
+| No. | Item              | Size  | Type         | Description                               |
+|-----+-------------------+-------+--------------+-------------------------------------------|
+|   5 | Identification ID | 8bit  | -            | 0x0C                                      |
+|   6 | Header Type       | 8bit  | -            | 0x00 (unused)                             |
+|   7 | Reserved          | 8bit  | -            | 0x00                                      |
+|   8 | Reserved          | 8bit  | -            | 0x00                                      |
+|   9 | Organization ID   | 8bit  | -            | NIED (0x01)                               |
+|  10 | Network ID        | 8bit  | -            | K-NET (0x10)                              |
+|  11 | Seismometer ID    | 16bit | Unsigned Int | Seismometer Identification Number         |
+|  12 | Data Block Length | 32bit | Unsigned Int | Size of subsequent Information Data Block |
+
+** Information Data Block (Observation Point Information)
+- Latitude, Longitude, Elevation
+- Observation Point Code
+- Data Start Time (BCD format)
+- Measurement Duration
+- Final Calibration Time (BCD format)
+- Calibration Method (GPS, NTP, etc.)
+- Geodetic System (Japan Datum, WGS84)
+- Seismometer Model Code
+- Sampling Rate (100Hz, 200Hz)
+- Number of Components (usually 3)
+- Relocation Flag
+
+** Component-Specific Information (NS, EW, UD)
+Each Component Includes:
+- Organization ID
+- Network ID
+- Channel Number
+- Scale Factor Numerator/Denominator
+- Offset
+- Measurement Range
+- Gain
+- Unit
+
+** Hypocenter Information (optional block)
+- Hypocenter Time (BCD)
+- Latitude, Longitude, Depth
+- Magnitude
+- Geodetic System
+- Hypocenter Type (e.g., JMA Immediate Report)
+
+* Additional Notes
+- Latitude and Longitude are in BCD format with 5 decimal places.
+- Elevation and Depth values include sign bits (positive/negative).
+- Scale Factors define how raw digital counts are converted to physical units.
+
+* Compression (WIN format compliant)
+Data samples are compressed using WIN standard compression:
+- 1st sample is non-differential
+- Following samples are stored as differences
+- Data compressed by variable bit length (4, 8, 16, 24, or 32 bits).
+
+* References
+- K-NET Ascii Format: [[https://www.kyoshin.bosai.go.jp/kyoshin/man/knetform.html]]
+- Full K-NET Manual: [[https://www.kyoshin.bosai.go.jp/kyoshin/man/index.html]]

@@ -1,0 +1,61 @@
+#+title: K-NET ASCII Format Specification
+#+author: NIED (translated)
+#+date: 2025-04-21
+#+options: toc:nil
+
+* Introduction
+This document explains the K-NET ASCII format with examples.
+
+* Header Format (First 17 Lines)
+| Field              | Description                                                                                  |
+|--------------------+----------------------------------------------------------------------------------------------|
+| Origin Time        | Event origin time                                                                            |
+| Lat.               | Event latitude                                                                               |
+| Lon.               | Event longitude                                                                              |
+| Depth. (km)        | Event depth                                                                                  |
+| Mag.               | Event magnitude                                                                              |
+| Station Code       | Site code                                                                                    |
+| Station Lat.       | Site latitude                                                                                |
+| Station Lon.       | Site longitude                                                                               |
+| Station Height (m) | Site altitude (Note: -9999 indicates missing data)                                           |
+| Record Time        | Recording start time (Note: includes 15s trigger delay; true start time = Record Time - 15s) |
+| Sampling Freq (Hz) | Sampling frequency (e.g., 100 Hz)                                                            |
+| Duration Time (s)  | Recording duration                                                                           |
+| Dir.               | Channel number (NS, EW, UD)                                                                  |
+| Scale Factor       | Ratio used to convert raw data to acceleration                                               |
+| Max Acc. (gal)     | Maximum acceleration value                                                                   |
+| Last Correction    | Time of last clock correction                                                                |
+| Memo.              | Comments                                                                                     |
+
+* Channel Number Mapping
+** K-NET Stations
+| Channel | Extension |
+|---------+-----------|
+| N-S     | NS        |
+| E-W     | EW        |
+| U-D     | UD        |
+
+** KiK-net Stations
+| Channel | Component | Location | Extension |
+|---------+-----------+----------+-----------|
+|       1 | NS        | Borehole | NS1       |
+|       2 | EW        | Borehole | EW1       |
+|       3 | UD        | Borehole | UD1       |
+|       4 | NS        | Surface  | NS2       |
+|       5 | EW        | Surface  | EW2       |
+|       6 | UD        | Surface  | UD2       |
+
+* Data Section (After Line 18)
+- Strong-motion data begin from line 18.
+- Each line has 8 columns of 7-digit signed integers.
+- To obtain the real acceleration time series, multiply each raw value by the scale factor (from line 14).
+- Data are uncorrected and may contain offsets.
+
+* Additional Notes
+- **Station Height:** If unavailable, marked as -9999.
+- **Record Time:** Contains a 15-second delay; subtract 15s for true time series start.
+- **Max Acceleration:** Calculated after offset or mean value removal.
+
+* References
+- [[https://www.kyoshin.bosai.go.jp/kyoshin/man/index_en.html]]
+- [[http://www.hinet.bosai.go.jp/st_info/detail/]] (sensor orientation reference)

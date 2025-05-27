@@ -1,0 +1,50 @@
+#+title: Ftp Exploration
+
+* Intro
+[[https://www.kyoshin.bosai.go.jp/kyoshin/download/]]
+hbuckchash
+himbBH1
+
+* /kyoshin/download
+** all/
+*** 1comp/
+**** Year/Month/yyyy-mm-dd-eventid -> images...
+#+begin_center
+all_acmap.png
+all_acmap.ps.gz
+all_aemp.png
+all_aemp.ps.gz
+all_jmamap.png
+all_jmamap.ps.gz
+all_pmmap.png
+all_pmmap.ps.gz
+all_puwave3ch.png
+all_puwave3ch.ps.gz
+all_rsc0125map.png
+all_rsc0125map.ps.gz
+all_rsc0250map.png
+all_rsc0250map.ps.gz
+all_rsc0500map.png
+all_rsc0500map.ps.gz
+all_rsc1000map.png
+all_rsc1000map.ps.gz
+all_rsc2000map.png
+all_rsc2000map.ps.gz
+all_rsc4000map.png
+all_rsc4000map.ps.gz
+all_sicmap.png
+all_sicmap.ps.gz
+all_top.png
+all_vcmap.png
+all_vcmap.ps.gz
+all_vemp.png
+all_vemp.ps.gz
+#+end_center
+*** alldata/
+**** Year/Month/yyyy-mm-dd-eventid
+
+*** hypomap/
+*** sitedb/
+** kik/
+** knet/
+** utility/
