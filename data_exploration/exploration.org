@@ -1,0 +1,138 @@
+#+title: Exploration
+* Intro
+Looking at the data present in two entries, downloaded from [[https://www.kyoshin.bosai.go.jp/kyoshin/quick/index_en.html][Easy Download]].
+Data used:
+| tar                |       date |  time | latitude | longitude | depth | magnitude | n K-NET | n KiK-net |
+|--------------------+------------+-------+----------+-----------+-------+-----------+---------+-----------|
+| 20240421061900.tar | 2024.04.21 | 06:19 | 34.23N   |   135.14E | 007km | M2.9      |       2 |         1 |
+| 20240402042400.tar | 2024.04.02 | 04:24 | 40.13N   |   141.71E | 071km | M6.0      |     231 |       161 |
+I intentionally used two data source with either little or a lot of data points.
+Both were downloaded by ="Download K-NET & KiK-net Data"= and K-NET ASCII Format.
+
+* Exploration
+** Preview tar balls with _tar -tf file_
+#+begin_quote
+octo@octo-hp~/u/S/D/h/p/data_exploration> tar -tf 20240421061900.tar
+20240421061900.knt.tar.gz
+20240421061900.kik.tar.gz
+20240421061900.all.img.tar.gz
+
+octo@octo-hp~/u/S/D/h/p/data_exploration> tar -tf 20240402042400.tar
+20240402042400.knt.tar.gz
+20240402042400.kik.tar.gz
+20240402042400.all.img.tar.gz
+#+end_quote
+
+** Separate each into =small= and =big= dirs. Extract via _tar -xf file_
+#+begin_quote
+20240421061900.all.img.tar.gz  20240421061900.kik.tar.gz  20240421061900.knt.tar.gz
+#+end_quote
+
+*** small - 1 kik, 2 knet
+**** Look into all.img
+#+begin_quote
+20240421061900.all_acmap.ps      20240421061900.all_rsc0125map.ps  20240421061900.all_rsc4000map.ps
+20240421061900.all_aemp.ps       20240421061900.all_rsc0250map.ps  20240421061900.all_sicmap.ps
+20240421061900.all_jmamap.ps     20240421061900.all_rsc0500map.ps  20240421061900.all_vcmap.ps
+20240421061900.all_pmmap.ps      20240421061900.all_rsc1000map.ps  20240421061900.all_vemp.ps
+20240421061900.all_puwave3ch.ps  20240421061900.all_rsc2000map.ps
+#+end_quote
+Contains images defined by =postscript=.
+
+**** Look into kik - *1 Station* -> Borehole + Surface station
+#+begin_quote
+20240421061900.kik_acmap.ps       20240421061900.kik_rsc1000map.ps  WKYH032404210619.NS1
+20240421061900.kik_aemp.ps        20240421061900.kik_rsc2000map.ps  WKYH032404210619.NS2
+20240421061900.kik_jmamap.ps      20240421061900.kik_rsc4000map.ps  WKYH032404210619.rsp.ps
+20240421061900.kik_pmmap.ps       20240421061900.kik_sicmap.ps      WKYH032404210619.UD1
+20240421061900.kik_puwave3ch.ps   20240421061900.kik_vcmap.ps       WKYH032404210619.UD2
+20240421061900.kik_rsc0125map.ps  20240421061900.kik_vemp.ps        WKYH032404210619.wave.ps
+20240421061900.kik_rsc0250map.ps  WKYH032404210619.EW1
+20240421061900.kik_rsc0500map.ps  WKYH032404210619.EW2
+#+end_quote
+We have a few non =ps= files (_ls | grep -v '\.ps$'_), all starting with =WKYH032404210619=:
+- .EW1 - ??
+- .EW2 - ??
+- .NS1 - ??
+- .NS2 - ??
+- .UD1 - ??
+- .UD2 - ??
+
+Station Code part of the name => *WKYH03*
+
+EW - EastWest
+NS - NorthSouth
+UD - ? *UpDown* ?
+
+Two readings per direction group, __1 and __2, stand for height of station, /one/ at *19.9m* and /two/ at *120m*.
+
+There are many numbers under =Memo.=.
+***** TODO Figure what this means
+
+**** Look into knt (knet) - *2 Stations* -> Surface station [ASCII]
+#+begin_quote
+20240421061900.knt_acmap.ps       20240421061900.knt_rsc1000map.ps  OSK0102404210619.rsp.ps
+20240421061900.knt_aemp.ps        20240421061900.knt_rsc2000map.ps  OSK0102404210619.UD
+20240421061900.knt_jmamap.ps      20240421061900.knt_rsc4000map.ps  OSK0102404210619.wave.ps
+20240421061900.knt_pmmap.ps       20240421061900.knt_sicmap.ps      WKY0012404210619.EW
+20240421061900.knt_puwave3ch.ps   20240421061900.knt_vcmap.ps       WKY0012404210619.NS
+20240421061900.knt_rsc0125map.ps  20240421061900.knt_vemp.ps        WKY0012404210619.rsp.ps
+20240421061900.knt_rsc0250map.ps  OSK0102404210619.EW               WKY0012404210619.UD
+20240421061900.knt_rsc0500map.ps  OSK0102404210619.NS               WKY0012404210619.wave.ps
+#+end_quote
+
+Two stations here:
+- OSK010
+- WKY001
+
+*** big - 161 kik, 231 knet
+**** all.img
+wow, images
+:O
+**** kik - *161 Stations*
+**** knet - *231 Stations*
+
+* Summary
+** all.img
+contains images:
+- acmap.ps looks like all readings combined.
+- puwave... has waves.....
+
+** kik
+Has n_kik Stations
+Each station has <station_code>1 and <station_code>2, indication surface and underground.
+
+** knet
+Has n_knet Stations
+
+** Station
+Each station has a name:
+3 letters and 3 numbers?
+
+Each station has three reading files:
+- EW
+- NS
+- UD
+Maybe split by direction of strong seismic movement?
+Each reading file is structured as such:
+#+begin_quote
+=taken from ....EW file=
+Origin Time       yyyy/mm/dd hh:mm:ss
+Lat.              34.232
+Long.             135.137
+Depth. (km)       7
+Mag.              2.9
+Station Code      <station_code>
+Station Lat.      34.3744
+Station Long.     135.2553
+Station Height(m) 3
+Record Time       yyyy/mm/dd hh:mm:ss
+Sampling Freq(Hz) 100Hz
+Duration Time(s)  60
+Dir.              E-W
+Scale Factor      7845(gal)/8223790
+Max. Acc. (gal)   4.046
+Last Correction   2024/04/21 06:19:29
+Memo.
+... data in 8 columns and many rows. possibly a long array or a matrix
+#+end_quote

@@ -1,0 +1,68 @@
+#+title: Mid Presentation
+#+AUTHOR:    Martin Sevov, Boris Kanev, Georgi Mihov
+#+DATE:      <2025-04-22 Tue>
+
+* Introduction
+K-NET and KiK-net are Japan's nationwide seismic networks.
+They provide open strong-motion earthquake data for scientific and engineering purposes.
+
+- Why earthquake data matters:
+  - Disaster management
+  - Building resilience
+  - Seismic hazard analysis
+
+K-NET -> Surface Stations
+KiK-net -> Borehole Station (more complicated sensors)
+
+* What is K-NET Data?
+K-NET data comes in two main formats:
+- **Binary format** (based on WIN32)
+- **ASCII format** (simple text)
+
+Each data record includes:
+- Event origin information (time, location, magnitude)
+- Observation station information
+- Strong-motion waveforms (raw seismic acceleration)
+
+* Accessing K-NET Data
+- Main website: [[https://www.kyoshin.bosai.go.jp/]]
+- Search by:
+  - Event time
+  - Magnitude
+  - Epicenter location
+- Download options:
+  - Single-event download
+  - Bulk download via database (advanced)
+
+** TODO: Insert screenshot of search page and download buttons here
+
+* Challenges Faced
+- Website and documentation mainly in Japanese
+- No "one-click" bulk download
+- Manual navigation required
+- Data formats require special understanding (BCD time format, WIN32 compression)
+
+** TODO: Add brief comment about any issues you personally encountered
+
+* My Workflow
+- Studied the K-NET binary and ASCII format specifications
+- Learned how to search and download events manually
+- Set up basic batch download strategies (semi-automatic)
+
+** TODO: Add screenshots of downloaded files or folder structure
+
+* Example Event Downloaded
+** TODO: Insert 1-2 examples (e.g., an earthquake you downloaded: date, magnitude)
+
+** TODO: (optional) Plot one waveform in a simple graph (time vs acceleration)
+
+* Research Questions
+
+* Objectives
+
+* Plan
+
+* References
+- K-NET Portal: [[https://www.kyoshin.bosai.go.jp/]]
+- K-NET Data Formats: [[https://www.kyoshin.bosai.go.jp/kyoshin/man/index.html]]
+- Hi-net Station Info (for KiK-net sensor orientation): [[http://www.hinet.bosai.go.jp/st_info/detail/]]
