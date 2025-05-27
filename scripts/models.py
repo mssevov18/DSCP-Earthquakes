@@ -1,4 +1,5 @@
 from typing import Optional
+from dataclasses import dataclass, field
 
 
 class StationReading:
@@ -97,3 +98,23 @@ class Station:
 
     def __repr__(self):
         return f"<Station {self.name} with directions: {self.directions()}>"
+
+@dataclass
+class Event:
+    event_id: str
+    stations: dict[str, Station] = field(default_factory=dict)
+
+    origin_time: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    depth_km: Optional[float] = None
+    magnitude: Optional[float] = None
+
+    def add_station(self, station: Station):
+        self.stations[station.name] = station
+
+    def num_stations(self) -> int:
+        return len(self.stations)
+
+    def __repr__(self):
+        return f"<Event {self.event_id} | {len(self.stations)} stations>"

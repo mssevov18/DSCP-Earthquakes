@@ -101,14 +101,13 @@ contains images:
 ** kik
 Has n_kik Stations
 Each station has <station_code>1 and <station_code>2, indication surface and underground.
+4 letters, 3 numbers
 
 ** knet
 Has n_knet Stations
+3 letters, 3 numbers
 
 ** Station
-Each station has a name:
-3 letters and 3 numbers?
-
 Each station has three reading files:
 - EW
 - NS
