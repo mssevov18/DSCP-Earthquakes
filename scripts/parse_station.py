@@ -13,27 +13,45 @@ def is_station_file(filename, station_name):
 def parse_station_file(filepath):
     metadata = {}
     data = []
+    in_data = False
+
     with open(filepath, "r") as f:
-        in_data = False
         for line in f:
             line = line.strip()
-            if not in_data:
-                if line.startswith("Last Correction"):
-                    if ":" in line:
-                        key, val = line.split(":", 1)
-                        metadata[key.strip()] = val.strip()
-                    in_data = True
-                    continue
-                elif ":" in line:
-                    key, val = line.split(":", 1)
-                    metadata[key.strip()] = val.strip()
+
+            if not line:
                 continue
-            if in_data:
-                try:
-                    numbers = list(map(int, line.split()))
-                    data.extend(numbers)
-                except ValueError:
-                    pass  # Ignore bad lines
+
+            # Switch to data mode after "Memo." line
+            if line.strip().startswith("Memo."):
+                in_data = True
+                metadata["Memo."] = ""  # explicitly include the key
+                continue
+
+            if not in_data:
+                # Split on two or more spaces
+                parts = re.split(r"\s{2,}", line, maxsplit=1)
+                if len(parts) == 2:
+                    key, val = parts[0].strip(), parts[1].strip()
+
+                    # Handle Scale Factor cleanup
+                    if key == "Scale Factor":
+                        val = re.sub(r"\(.*?\)", "", val).strip()
+
+                    # Handle Sampling Freq(Hz): remove "Hz"
+                    if key == "Sampling Freq(Hz)":
+                        val = re.sub(r"[^\d.]", "", val)
+
+                    metadata[key] = val
+                continue
+
+            # If in_data: read numeric values
+            try:
+                numbers = list(map(int, line.split()))
+                data.extend(numbers)
+            except ValueError:
+                continue
+
     return metadata, data
 
 

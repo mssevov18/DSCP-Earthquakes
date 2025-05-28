@@ -73,34 +73,41 @@ class StationReading:
 
     @classmethod
     def from_dict(cls, metadata: dict[str, str], data: list[int]) -> "StationReading":
-        print("Available metadata keys:", list(metadata.keys()))
+        # print("Available metadata keys:", list(metadata.keys()))
 
-        def try_parse_float(key):
+        def clean_val(val: Optional[str]) -> Optional[str]:
+            """Cleans values by stripping whitespace."""
+            return val.strip() if val else val
+
+        def try_parse_float(key: str) -> Optional[float]:
+            val = metadata.get(key)
+            if val is None:
+                return None
+            val = clean_val(val)
+            val = re.sub(r"[^\d.+-eE]", "", val)  # strip units like "Hz"
             try:
-                return float(metadata.get(key)) if key in metadata else None
+                return float(val)
             except ValueError:
                 return None
 
-        def try_parse_str(key):
-            return metadata.get(key, None)
+        def try_parse_str(key: str) -> Optional[str]:
+            val = metadata.get(key)
+            return clean_val(val)
 
-        def parse_scale_factor(raw: str) -> str:
-            """
-            Converts strings like '3923(gal)/8224838' to a float string.
-            Falls back to the raw string if parsing fails.
-            """
-            if raw:
-                try:
-                    
-                    numerator, denominator = re.sub(r"[(]gal[)]/.*", "", raw), re.sub(r".*/", "", raw)
-                    scale = float(numerator.strip()) / float(denominator.strip())
-                    return str(scale)
-                except Exception:
-                    pass
-            return raw
+        def parse_scale_factor(val: Optional[str]) -> Optional[str]:
+            """Extracts and evaluates scale factor like '3923(gal)/8224838' => '0.000477'."""
+            if not val:
+                return None
+            try:
+                # Remove units like (gal)
+                val = re.sub(r"\(.*?\)", "", val)
+                num, denom = map(str.strip, val.split("/"))
+                scale = float(num) / float(denom)
+                return str(scale)
+            except Exception:
+                return None
 
-        scale_raw = try_parse_str("Scale Factor")
-        parsed_scale = parse_scale_factor(scale_raw)
+        parsed_scale = parse_scale_factor(metadata.get("Scale Factor"))
 
         return cls(
             origin_time=try_parse_str("Origin Time"),
