@@ -15,37 +15,37 @@ def parse_station_file(filepath):
     data = []
     in_data = False
 
-    with open(filepath, "r") as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         for line in f:
-            line = line.strip()
+            line = line.rstrip()
 
             if not line:
                 continue
 
-            # Switch to data mode after "Memo." line
             if line.strip().startswith("Memo."):
                 in_data = True
-                metadata["Memo."] = ""  # explicitly include the key
+                metadata["Memo."] = ""
                 continue
 
             if not in_data:
-                # Split on two or more spaces
-                parts = re.split(r"\s{2,}", line, maxsplit=1)
-                if len(parts) == 2:
-                    key, val = parts[0].strip(), parts[1].strip()
+                # Use a fixed width for the key (17 chars), the rest is value
+                key = line[:17].strip()
+                val = line[17:].strip()
 
-                    # Handle Scale Factor cleanup
-                    if key == "Scale Factor":
-                        val = re.sub(r"\(.*?\)", "", val).strip()
+                # Normalize keys
+                key = re.sub(r"\s+", " ", key).rstrip(".")
 
-                    # Handle Sampling Freq(Hz): remove "Hz"
-                    if key == "Sampling Freq(Hz)":
-                        val = re.sub(r"[^\d.]", "", val)
+                # Clean up known value units
+                if "Scale Factor" in key:
+                    val = re.sub(r"\(.*?\)", "", val).strip()
 
-                    metadata[key] = val
+                if "Sampling Freq" in key and "Hz" in val:
+                    val = re.sub(r"[^\d.]", "", val)
+
+                metadata[key] = val
                 continue
 
-            # If in_data: read numeric values
+            # Data line (after Memo.)
             try:
                 numbers = list(map(int, line.split()))
                 data.extend(numbers)
