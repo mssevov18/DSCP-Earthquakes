@@ -57,7 +57,7 @@ class StationReading:
                 float(self.scale_factor) if apply_scale and self.scale_factor else 1.0
             )
         except ValueError:
-            scale = 1.0
+            scale = 0
 
         df = pd.DataFrame({"acc": [x * scale for x in self.data]})
 
@@ -91,9 +91,8 @@ class StationReading:
             """
             if raw:
                 try:
-                    # Remove any units like (gal)
-                    cleaned = re.sub(r"\([^)]*\)", "", raw)
-                    numerator, denominator = cleaned.split("/")
+                    
+                    numerator, denominator = re.sub(r"[(]gal[)]/.*", "", raw), re.sub(r".*/", "", raw)
                     scale = float(numerator.strip()) / float(denominator.strip())
                     return str(scale)
                 except Exception:
