@@ -1,5 +1,7 @@
-from typing import Optional
+from typing import Optional, List, Dict
 from dataclasses import dataclass, field
+import pandas as pd
+import re
 
 
 class StationReading:
@@ -42,9 +44,37 @@ class StationReading:
         self.last_correction = last_correction
         self.memo = memo
         self.data = data
+        self._cached_df: Optional[pd.DataFrame] = None
+
+    def to_dataframe(
+        self, with_time: bool = True, apply_scale: bool = True, use_cache: bool = True
+    ) -> pd.DataFrame:
+        if self._cached_df is not None and use_cache:
+            return self._cached_df
+
+        try:
+            scale = (
+                float(self.scale_factor) if apply_scale and self.scale_factor else 1.0
+            )
+        except ValueError:
+            scale = 1.0
+
+        df = pd.DataFrame({"acc": [x * scale for x in self.data]})
+
+        if with_time and self.sampling_freq_hz:
+            dt = 1.0 / self.sampling_freq_hz
+            df["time_s"] = df.index * dt
+
+        self._cached_df = df
+        return df
+
+    def invalidate_cache(self):
+        self._cached_df = None
 
     @classmethod
     def from_dict(cls, metadata: dict[str, str], data: list[int]) -> "StationReading":
+        print("Available metadata keys:", list(metadata.keys()))
+
         def try_parse_float(key):
             try:
                 return float(metadata.get(key)) if key in metadata else None
@@ -53,6 +83,25 @@ class StationReading:
 
         def try_parse_str(key):
             return metadata.get(key, None)
+
+        def parse_scale_factor(raw: str) -> str:
+            """
+            Converts strings like '3923(gal)/8224838' to a float string.
+            Falls back to the raw string if parsing fails.
+            """
+            if raw:
+                try:
+                    # Remove any units like (gal)
+                    cleaned = re.sub(r"\([^)]*\)", "", raw)
+                    numerator, denominator = cleaned.split("/")
+                    scale = float(numerator.strip()) / float(denominator.strip())
+                    return str(scale)
+                except Exception:
+                    pass
+            return raw
+
+        scale_raw = try_parse_str("Scale Factor")
+        parsed_scale = parse_scale_factor(scale_raw)
 
         return cls(
             origin_time=try_parse_str("Origin Time"),
@@ -68,7 +117,7 @@ class StationReading:
             sampling_freq_hz=try_parse_float("Sampling Freq(Hz)"),
             duration_s=try_parse_float("Duration Time(s)"),
             direction=try_parse_str("Dir."),
-            scale_factor=try_parse_str("Scale Factor"),
+            scale_factor=parsed_scale,
             max_acc_gal=try_parse_float("Max. Acc. (gal)"),
             last_correction=try_parse_str("Last Correction"),
             memo=try_parse_str("Memo."),
@@ -98,6 +147,7 @@ class Station:
 
     def __repr__(self):
         return f"<Station {self.name} with directions: {self.directions()}>"
+
 
 @dataclass
 class Event:
