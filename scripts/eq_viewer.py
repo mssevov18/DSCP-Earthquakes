@@ -101,32 +101,30 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_reading(reading):
-    if not reading.data:
-        print("No data available.")
+def plot_reading(reading: StationReading):
+    if not reading.data or len(reading.data) == 0:
+        print("[!] No data to plot.")
         return
-
     if reading.sampling_freq_hz is None:
-        print("Missing sampling frequency.")
+        print("[!] Sampling frequency is missing.")
         return
-
     if not reading.scale_factor:
-        print("Missing scale factor.")
+        print("[!] Scale factor is missing.")
+        return
+    try:
+        scale = float(reading.scale_factor)
+    except ValueError:
+        print(f"[!] Invalid scale factor: {reading.scale_factor}")
         return
 
-    # Time axis
     time_s = np.arange(len(reading.data)) / reading.sampling_freq_hz
-
-    # Apply scale factor to convert raw data to gal
-    scale = float(reading.scale_factor)
     acc = np.array(reading.data) * scale
 
-    # Plot
     plt.figure(figsize=(10, 4))
-    plt.plot(time_s, acc, label=f"{reading.station_code} {reading.direction}")
+    plt.plot(time_s, acc, label=f"{reading.direction}")
     plt.xlabel("Time (s)")
     plt.ylabel("Acceleration (gal)")
-    plt.title(f"Station: {reading.station_code}, Direction: {reading.direction}")
+    plt.title(f"{reading.station_code} - {reading.direction}")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()

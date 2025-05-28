@@ -74,6 +74,11 @@ class StationReading:
     @classmethod
     def from_dict(cls, metadata: dict[str, str], data: list[int]) -> "StationReading":
         # print("Available metadata keys:", list(metadata.keys()))
+        # print("---- METADATA DEBUG ----")
+        # for k, v in metadata.items():
+        #     print(f"{repr(k)} -> {repr(v)}")
+        # print("-------------------------")
+        # # input()
 
         def clean_val(val: Optional[str]) -> Optional[str]:
             """Cleans values by stripping whitespace."""
@@ -84,7 +89,7 @@ class StationReading:
             if val is None:
                 return None
             val = clean_val(val)
-            val = re.sub(r"[^\d.+-eE]", "", val)  # strip units like "Hz"
+            val = re.sub(r"[^0-9.\-eE]+", "", val)  # safer pattern
             try:
                 return float(val)
             except ValueError:
