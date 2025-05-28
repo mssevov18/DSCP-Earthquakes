@@ -71,17 +71,6 @@ if __name__ == "__main__":
     import sys
     import json
 
-    # if len(sys.argv) < 2:
-    #     print("Usage: python extract_all_stations.py <ROOT_FOLDER>")
-    #     sys.exit(1)
-
-    # root = os.path.abspath(sys.argv[1])
-    # stations = extract_all_stations(root)
-
-    # print(f"Loaded {len(stations)} stations.")
-    # for name, station in stations.items():
-    #     print(f"- {name}: {station.directions()}")
-
     if len(sys.argv) < 3:
         print("Usage: python extract_event.py <PATH> <EVENT_ID>")
         sys.exit(1)
