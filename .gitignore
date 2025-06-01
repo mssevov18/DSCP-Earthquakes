@@ -176,3 +176,5 @@ cython_debug/
 .directory
 data_exploration/**/*.tar
 *.tar*
+*.tar
+*.tar.gz
