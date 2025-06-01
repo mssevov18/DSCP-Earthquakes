@@ -2,7 +2,7 @@
 
 import sys
 import os
-from data.parse_station import extract_for_station
+from scripts.data.parse_station import extract_for_station
 
 if len(sys.argv) < 3:
     print("Usage: python example_find.py <PATH> <STATION_NAME>")

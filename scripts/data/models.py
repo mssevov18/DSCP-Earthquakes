@@ -116,10 +116,10 @@ class StationReading:
 
         return cls(
             origin_time=try_parse_str("Origin Time"),
-            latitude=try_parse_float("Lat."),
-            longitude=try_parse_float("Long."),
+            latitude=try_parse_float("Lat"),
+            longitude=try_parse_float("Long"),
             depth_km=try_parse_float("Depth. (km)"),
-            magnitude=try_parse_float("Mag."),
+            magnitude=try_parse_float("Mag"),
             station_code=try_parse_str("Station Code"),
             station_lat=try_parse_float("Station Lat."),
             station_long=try_parse_float("Station Long."),
@@ -127,7 +127,7 @@ class StationReading:
             record_time=try_parse_str("Record Time"),
             sampling_freq_hz=try_parse_float("Sampling Freq(Hz)"),
             duration_s=try_parse_float("Duration Time(s)"),
-            direction=try_parse_str("Dir."),
+            direction=try_parse_str("Dir"),
             scale_factor=parsed_scale,
             max_acc_gal=try_parse_float("Max. Acc. (gal)"),
             last_correction=try_parse_str("Last Correction"),

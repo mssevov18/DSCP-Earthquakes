@@ -3,6 +3,9 @@ from scripts.data.extract import extract_event
 from scripts.libs.interactive_lib import getch, clear, example_interactive_menu
 from scripts.libs.nav_df import nav_df
 import matplotlib.pyplot as plt
+from typing import Union, List
+import numpy as np
+import pandas as pd
 
 
 def enhanced_interactive_menu(static: str, options: list[str]) -> int:
@@ -45,9 +48,111 @@ def enhanced_interactive_menu(static: str, options: list[str]) -> int:
         elif ch.lower() == "q":
             return -1
 
+class SelectorUI():
+    def __init__(self,
+            static: str,
+            options: list[(str, chr)],
+            index=0,
+            picked=-1,
+            selected=[],
+            filter_text=""):
+        self.static = static
+        self.options = options
+        self.index = index
+        self.picked = picked
+        self.selected = selected
+        self.filter_text = filter_text
+
+    def select_one() -> int:
+        """
+        Interactive selection Menu
+        - Navigate with W/S
+        - Press Q to cancel and return -1
+        - Press F to enter filter mode
+        """
+        while True:
+            clear()
+            print(static)
+
+            #TODO update the filter to use getch and update live
+            if filter_text:
+                print(f"Filter: {filter_text} (press F again to update)")
+            for i, opt in enumerate(filtered):
+                prefix = ">" if i == index else " "
+                print(f"{prefix} {opt}")
+
+            print("\nUse W/S or ↑/↓ to move, ENTER to select, Q to quit, F to filter")
+            ch = getch()
+            print(ch)
+
+            # TODO implement the rest of the functionality
+            #   - saving between sessons (should be automatic from class)
+            #   - live filter
+            #   - select multiple
+
+            if ch in ["w", "\x1b[A"]:
+                index = (index - 1) % len(filtered)
+            elif ch in ["s", "\x1b[B"]:
+                index = (index + 1) % len(filtered)
+            elif ch.lower() == "f":
+                # clear()
+                # print(static)
+                filter_text = input("Enter filter text: ").strip()
+                filtered = [o for o in options if filter_text.lower() in o.lower()]
+                index = 0
+            elif ch in ["\r", "\n"]:
+                return options.index(filtered[index])
+            elif ch.lower() == "q":
+                return -1
+
+
+
+    def select_many() -> list[int]:
+        pass
+
+def my_ui(
+    static: str,
+    options: list[(str, chr)],
+    multiple=False,
+    index=0,
+    picked=-1,
+    selected=[],
+    filter_text=""
+) -> Union[int, list[int]]:
+
+
+
+def make_static(lines: List[str]):
+    max_len = 4  # 4 is padding
+    static = ""
+    if type(lines) == str:
+        max_len += len(lines)
+        static = "| " + lines + (max_len - len(lines)) * " " + " |\n"
+        lines = []
+    elif type(lines) == list:
+        max_len += max([len(line) for line in lines])
+    else:
+        return f"ERROR: Wrong type {type(lines)}"
+
+    for line in lines:
+        static += "| " + line + (max_len - len(line)) * " " + " |\n"
+
+    return ("/-" + max_len * "-" + "-\\\n"
+            + static
+            + "\\-" + max_len * "-" + "-/\n")
+
 
 def view_event(event: Event):
-    static = f"<Event {event.event_id } | {len(event.stations)} stations>"
+    static = make_static(
+        [
+            f"Event {event.event_id }",
+            f"{len(event.stations)} stations",
+            f"Time of origin: {event.origin_time}",
+            f"Latitude: <{event.latitude}>",
+            f"Longitude: <{event.longitude}>",
+            f"Magnitude: {event.magnitude}",
+        ]
+    )
     station_names = list(event.stations.keys())
 
     while True:
@@ -59,7 +164,7 @@ def view_event(event: Event):
 
 
 def view_station(station: Station):
-    static = f"Station Code: {station.name}"
+    static = make_static(f"Station Code: {station.name}")
     directions = station.directions()
 
     while True:
@@ -72,8 +177,6 @@ def view_station(station: Station):
 
 
 def view_reading(reading: StationReading):
-    import pandas as pd
-
     df = reading.to_dataframe()
     options = ["Show plot", "Show nav_df", "Describe stats", "Back"]
 
@@ -94,10 +197,6 @@ def view_reading(reading: StationReading):
         elif options[choice] == "Describe stats":
             print(df.describe())
             input("\nPress Enter to continue...")
-
-
-import matplotlib.pyplot as plt
-import numpy as np
 
 
 def plot_reading(reading: StationReading):
