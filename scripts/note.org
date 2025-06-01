@@ -1,0 +1,4 @@
+#+title: Note
+
+fix the imports to be like
+scripts.data.bla bla

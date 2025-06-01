@@ -1,7 +1,7 @@
-from models import Event, Station, StationReading
-from extract_event import extract_event, extract_all_stations
-from interactive_lib import getch, clear, example_interactive_menu
-from nav_df import nav_df
+from scripts.data.models import Event, Station, StationReading
+from scripts.data.extract import extract_event
+from scripts.libs.interactive_lib import getch, clear, example_interactive_menu
+from scripts.libs.nav_df import nav_df
 import matplotlib.pyplot as plt
 
 
@@ -72,7 +72,6 @@ def view_station(station: Station):
 
 
 def view_reading(reading: StationReading):
-    from nav_df import nav_df
     import pandas as pd
 
     df = reading.to_dataframe()
