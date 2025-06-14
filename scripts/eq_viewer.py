@@ -2,113 +2,86 @@ from scripts.data.models import Event, Station, StationReading
 from scripts.data.extract import extract_event
 from scripts.libs.interactive_lib import getch, clear, example_interactive_menu
 from scripts.libs.nav_df import nav_df
+from scripts.vis.multi_event_vis import *
 import matplotlib.pyplot as plt
 from typing import Union, List
 import numpy as np
 import pandas as pd
 
 
-def enhanced_interactive_menu(static: str, options: list[str]) -> int:
+def enhanced_interactive_menu(
+    static: str, options: list[str], max_visible: int = 10, item_prefix=""
+) -> int:
     """
     Extended interactive menu:
+    - Shows up to `max_visible` entries with scroll indicators
     - Navigate with W/S or ↑/↓
-    - Press ENTER to select
-    - Press Q to cancel and return -1
-    - Press F to enter filter mode
+    - ENTER to select, Q to quit, F to filter
     """
     index = 0
     picked = -1
     filter_text = ""
     filtered = options.copy()
+    box_width = 15
 
     while True:
         clear()
         print(static)
         if filter_text:
             print(f"Filter: {filter_text} (press F again to update)")
-        for i, opt in enumerate(filtered):
-            prefix = ">" if i == index else " "
-            print(f"{prefix} {opt}")
+
+        total = len(filtered)
+        if total == 0:
+            print("[no matches]")
+        else:
+            start = max(0, index - max_visible // 2)
+            end = min(total, start + max_visible)
+
+            # Adjust window if near bottom
+            if end - start < max_visible and start > 0:
+                start = max(0, end - max_visible)
+
+            # Show indicators
+            if start > 0:
+                print(f"┌{'─' * box_width}({start})┐\n")
+            else:
+                print(f"┌{'─' * box_width}───┐\n")
+
+            # print(f"______/| {start} |\\______")
+
+            for i in range(start, end):
+                prefix = ">" if i == index else " "
+                print(f"{prefix} {item_prefix}{filtered[i]}")
+
+            if end < total:
+                print(f"\n└{'─' * box_width}({end})┘")
+            else:
+                print(f"\n└{'─' * box_width}───┘")
+            # print(f"‾‾‾‾‾‾\\| {total - end} |/‾‾‾‾‾‾")
 
         print("\nUse W/S or ↑/↓ to move, ENTER to select, Q to quit, F to filter")
         ch = getch()
 
         if ch in ["w", "\x1b[A"]:
-            index = (index - 1) % len(filtered)
+            index = (index - 1) % total if total else 0
         elif ch in ["s", "\x1b[B"]:
-            index = (index + 1) % len(filtered)
+            index = (index + 1) % total if total else 0
+        elif ch in ["W"]:
+            index = (index - 5) % total if total else 0
+        elif ch in ["S"]:
+            index = (index + 5) % total if total else 0
         elif ch.lower() == "f":
-            # clear()
-            # print(static)
             filter_text = input("Enter filter text: ").strip()
             filtered = [o for o in options if filter_text.lower() in o.lower()]
             index = 0
-        elif ch in ["\r", "\n"]:
+        elif ch in ["\r", "\n"] and total:
             return options.index(filtered[index])
         elif ch.lower() == "q":
             return -1
 
-class SelectorUI():
-    def __init__(self,
-            static: str,
-            options: list[(str, chr)],
-            index=0,
-            picked=-1,
-            selected=[],
-            filter_text=""):
-        self.static = static
-        self.options = options
-        self.index = index
-        self.picked = picked
-        self.selected = selected
-        self.filter_text = filter_text
-
-    def select_one() -> int:
-        """
-        Interactive selection Menu
-        - Navigate with W/S
-        - Press Q to cancel and return -1
-        - Press F to enter filter mode
-        """
-        while True:
-            clear()
-            print(static)
-
-            #TODO update the filter to use getch and update live
-            if filter_text:
-                print(f"Filter: {filter_text} (press F again to update)")
-            for i, opt in enumerate(filtered):
-                prefix = ">" if i == index else " "
-                print(f"{prefix} {opt}")
-
-            print("\nUse W/S or ↑/↓ to move, ENTER to select, Q to quit, F to filter")
-            ch = getch()
-            print(ch)
-
-            # TODO implement the rest of the functionality
-            #   - saving between sessons (should be automatic from class)
-            #   - live filter
-            #   - select multiple
-
-            if ch in ["w", "\x1b[A"]:
-                index = (index - 1) % len(filtered)
-            elif ch in ["s", "\x1b[B"]:
-                index = (index + 1) % len(filtered)
-            elif ch.lower() == "f":
-                # clear()
-                # print(static)
-                filter_text = input("Enter filter text: ").strip()
-                filtered = [o for o in options if filter_text.lower() in o.lower()]
-                index = 0
-            elif ch in ["\r", "\n"]:
-                return options.index(filtered[index])
-            elif ch.lower() == "q":
-                return -1
-
-
-
     def select_many() -> list[int]:
         pass
+
 
 def my_ui(
     static: str,
@@ -117,9 +90,9 @@ def my_ui(
     index=0,
     picked=-1,
     selected=[],
-    filter_text=""
+    filter_text="",
 ) -> Union[int, list[int]]:
-
+    pass
 
 
 def make_static(lines: List[str]):
@@ -137,16 +110,38 @@ def make_static(lines: List[str]):
     for line in lines:
         static += "| " + line + (max_len - len(line)) * " " + " |\n"
 
-    return ("/-" + max_len * "-" + "-\\\n"
-            + static
-            + "\\-" + max_len * "-" + "-/\n")
+    return "/-" + max_len * "-" + "-\\\n" + static + "\\-" + max_len * "-" + "-/\n"
+
+
+def view_events(events: list[Event]):
+    static = make_static(
+        [
+            f"{len(events)} Event(s)",
+        ]
+    )
+    event_labels = [f"[{e.magnitude}] {e.event_id} - <{e.origin_time}>" for e in events]
+    event_labels.append("Plot magnitude frequencies")
+    event_labels.append("Plot magnitudes over time")
+    while True:
+        choice = enhanced_interactive_menu(static, event_labels)
+        nc = choice - len(events)
+        if choice == -1:
+            break
+        if nc == 0:
+            plot_magnitude_histogram(events)
+        if nc == 1:
+            plot_magnitude_timeline(events)
+        elif nc < 0:
+            event = events[choice]
+            view_event(event)
 
 
 def view_event(event: Event):
     static = make_static(
         [
             f"Event {event.event_id }",
-            f"{len(event.stations)} stations",
+            f"{event.num_kik_stations()} KIK stations",
+            f"{event.num_knet_stations()} KNET stations",
             f"Time of origin: {event.origin_time}",
             f"Latitude: <{event.latitude}>",
             f"Longitude: <{event.longitude}>",
@@ -156,7 +151,9 @@ def view_event(event: Event):
     station_names = list(event.stations.keys())
 
     while True:
-        choice = enhanced_interactive_menu(static, station_names)
+        choice = enhanced_interactive_menu(
+            static, station_names, item_prefix="Station "
+        )
         if choice == -1:
             break  # user quit with 'q'
         station_name = station_names[choice]
@@ -164,11 +161,19 @@ def view_event(event: Event):
 
 
 def view_station(station: Station):
-    static = make_static(f"Station Code: {station.name}")
     directions = station.directions()
+    static = make_static(
+        [
+            f"Station Code: {station.name}",
+            f"{station.type()} Station",
+            f"Station Latitude: <{station.readings[directions[0]].station_lat}>",
+            f"Station Longitude: <{station.readings[directions[0]].station_long}>",
+            f"Station Height: <{station.readings[directions[0]].station_height}>",
+        ]
+    )
 
     while True:
-        index = enhanced_interactive_menu(static, directions)
+        index = enhanced_interactive_menu(static, directions, item_prefix="Direction ")
         if index == -1:
             break  # user pressed 'q'
         direction = directions[index]
@@ -233,19 +238,45 @@ if __name__ == "__main__":
     import sys
     from pathlib import Path
 
-    if len(sys.argv) < 2:
-        print("Usage: python eq_viewer <ROOT_PATH>")
+    if len(sys.argv) < 3:
+        print("Usage: python eq_viewer <multi-event/event/station <ROOT_PATH>")
         sys.exit(1)
 
-    try:
-        event = extract_event(sys.argv[1], sys.argv[1].split("/")[-1].strip())
-    except:
-        print("error......Consider adding logging // propper error handling")
-        sys.exit(1)
+    if sys.argv[1] == "station":
+        pass
+    elif sys.argv[1] == "event":
+        try:
+            event = extract_event(sys.argv[2], sys.argv[2].split("/")[-1].strip())
+        except:
+            print("error......Consider adding logging // propper error handling")
+            sys.exit(1)
 
-    print(event)
-    for name, station in event.stations.items():
-        print(f"  {name}: {station.directions()}")
+        print(event)
+        for name, station in event.stations.items():
+            print(f"  {name}: {station.directions()}")
 
-    # view_station(event.stations[list(event.stations.keys())[0]])
-    view_event(event)
+        # view_station(event.stations[list(event.stations.keys())[0]])
+        view_event(event)
+    elif sys.argv[1] == "multi-event":
+        root_path = Path(sys.argv[2])
+        if not root_path.exists() or not root_path.is_dir():
+            print(f"Invalid root directory: {root_path}")
+            sys.exit(1)
+
+        events: list[Event] = []
+        for child in sorted(root_path.iterdir()):
+            if child.is_dir():
+                try:
+                    event = extract_event(str(child), child.name)
+                    events.append(event)
+                except Exception as e:
+                    print(f"[!] Failed to load event from {child.name}: {e}")
+
+        if not events:
+            print("No valid events found.")
+            sys.exit(1)
+
+        view_events(events)
+
+    else:
+        print(f"Wrong target group: {sys.argv[1]}...\nmulti-event / event / station")

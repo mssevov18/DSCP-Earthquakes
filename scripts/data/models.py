@@ -5,6 +5,28 @@ import re
 
 
 class StationReading:
+    """
+    origin_time
+    latitude
+    longitude
+    depth_km
+    magnitude
+    station_code
+    station_lat
+    station_long
+    station_height
+    record_time
+    sampling_freq_hz
+    duration_s
+    direction
+    scale_factor
+    max_acc_gal
+    last_correction
+    memo
+    data
+    _cached_df: Optional[pd.DataFrame]
+    """
+
     def __init__(
         self,
         origin_time: Optional[str],
@@ -78,7 +100,7 @@ class StationReading:
         # for k, v in metadata.items():
         #     print(f"{repr(k)} -> {repr(v)}")
         # print("-------------------------")
-        # # input()
+        # input()
 
         def clean_val(val: Optional[str]) -> Optional[str]:
             """Cleans values by stripping whitespace."""
@@ -114,15 +136,15 @@ class StationReading:
 
         parsed_scale = parse_scale_factor(metadata.get("Scale Factor"))
 
-        return cls(
+        cls_result = cls(
             origin_time=try_parse_str("Origin Time"),
             latitude=try_parse_float("Lat"),
             longitude=try_parse_float("Long"),
             depth_km=try_parse_float("Depth. (km)"),
             magnitude=try_parse_float("Mag"),
             station_code=try_parse_str("Station Code"),
-            station_lat=try_parse_float("Station Lat."),
-            station_long=try_parse_float("Station Long."),
+            station_lat=try_parse_float("Station Lat"),
+            station_long=try_parse_float("Station Long"),
             station_height=try_parse_float("Station Height(m)"),
             record_time=try_parse_str("Record Time"),
             sampling_freq_hz=try_parse_float("Sampling Freq(Hz)"),
@@ -134,6 +156,11 @@ class StationReading:
             memo=try_parse_str("Memo."),
             data=data,
         )
+
+        # print(cls_result.station_lat, cls_result.station_long, sep="\n")
+        # input()
+
+        return cls_result
 
     def max_acc(self):
         return max(self.data) if self.data else None
@@ -156,6 +183,9 @@ class Station:
     def directions(self):
         return list(self.readings.keys())
 
+    def type(self):
+        return "KIK" if len(list(self.readings.keys())) > 3 else "KNET"
+
     def __repr__(self):
         return f"<Station {self.name} with directions: {self.directions()}>"
 
@@ -176,6 +206,12 @@ class Event:
 
     def num_stations(self) -> int:
         return len(self.stations)
+
+    def num_knet_stations(self) -> int:
+        return len([True for s in self.stations.values() if s.type() == "KNET"])
+
+    def num_kik_stations(self) -> int:
+        return len([True for s in self.stations.values() if s.type() == "KIK"])
 
     def __repr__(self):
         return f"<Event {self.event_id} | {len(self.stations)} stations>"
