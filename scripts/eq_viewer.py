@@ -3,6 +3,7 @@ from scripts.data.extract import extract_event
 from scripts.libs.interactive_lib import getch, clear, example_interactive_menu
 from scripts.libs.nav_df import nav_df
 from scripts.vis.multi_event_vis import *
+from scripts.vis.event_vis import *
 import matplotlib.pyplot as plt
 from typing import Union, List
 import numpy as np
@@ -119,11 +120,11 @@ def view_events(events: list[Event]):
             f"{len(events)} Event(s)",
         ]
     )
-    event_labels = [f"[{e.magnitude}] {e.event_id} - <{e.origin_time}>" for e in events]
-    event_labels.append("Plot magnitude frequencies")
-    event_labels.append("Plot magnitudes over time")
+    labels = [f"[{e.magnitude}] {e.event_id} - <{e.origin_time}>" for e in events]
+    labels.append("Plot magnitude frequencies")
+    labels.append("Plot magnitudes over time")
     while True:
-        choice = enhanced_interactive_menu(static, event_labels)
+        choice = enhanced_interactive_menu(static, labels)
         nc = choice - len(events)
         if choice == -1:
             break
@@ -137,6 +138,11 @@ def view_events(events: list[Event]):
 
 
 def view_event(event: Event):
+    max_len = max(
+        len(reading)
+        for station in event.stations.values()
+        for reading in station.readings.values()
+    )
     static = make_static(
         [
             f"Event {event.event_id }",
@@ -146,18 +152,38 @@ def view_event(event: Event):
             f"Latitude: <{event.latitude}>",
             f"Longitude: <{event.longitude}>",
             f"Magnitude: {event.magnitude}",
+            f"{max_len}",
         ]
     )
     station_names = list(event.stations.keys())
+    labels = [f"Station {k}" for k in station_names]
+    labels.append("Map plot")
+    labels.append("Vector plot")
 
     while True:
-        choice = enhanced_interactive_menu(
-            static, station_names, item_prefix="Station "
-        )
+        choice = enhanced_interactive_menu(static, labels)
+        nc = choice - len(station_names)
         if choice == -1:
             break  # user quit with 'q'
-        station_name = station_names[choice]
-        view_station(event.stations[station_name])
+        if nc == 0:
+            resp = input("Tight zoom around affected area? (Y/n): ").strip().lower()
+            tight = resp != "n"
+
+            # Ask for save path (leave blank to skip saving)
+            save_dest = (
+                input("Save map to file (enter path/name or leave blank): ").strip()
+                or None
+            )
+
+            plot_event_map(event, tight=tight, save_path=save_dest)
+        if nc == 1:
+            tight = input("Tight zoom? (Y/n): ").strip().lower() != "n"
+            do_anim = input("Make animation? (y/N): ").strip().lower() == "y"
+            savep = input("Save to (path[.gif, .mp4] or blank): ").strip() or None
+            plot_event_vectors(event, tight=tight, save_path=savep, animate=do_anim)
+        elif nc < 0:
+            station_name = station_names[choice]
+            view_station(event.stations[station_name])
 
 
 def view_station(station: Station):

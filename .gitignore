@@ -178,3 +178,5 @@ data_exploration/**/*.tar
 *.tar*
 *.tar
 *.tar.gz
+
+*.mp4
