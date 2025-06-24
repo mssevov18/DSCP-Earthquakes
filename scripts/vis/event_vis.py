@@ -2,6 +2,7 @@ from scripts.data.models import Event
 from matplotlib.widgets import Slider
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import cartopy.crs as ccrs
@@ -109,8 +110,8 @@ def plot_event_vectors(
     save_path: str | None = None,
     animate: bool = False,
     padding_deg: float = 1.0,
-    cmap="viridis",
-    arrow_scale=1e4,
+    cmap = plt.get_cmap("viridis"),
+    arrow_scale = 100,
     interval=100,
 ):
     """
@@ -151,7 +152,7 @@ def plot_event_vectors(
                 if L > max_len:
                     max_len = L
                     if rd.sampling_freq_hz:
-                        dt = 1.0 / rd.sampling_freq_hz
+                        dt = 0.05 / rd.sampling_freq_hz
     times = np.arange(max_len) * (dt or 1.0)
 
     # 3) Compute map extent
@@ -194,7 +195,14 @@ def plot_event_vectors(
         vmin, vmax = np.nanpercentile(ud_stack, 1), np.nanpercentile(ud_stack, 99)
     else:
         vmin, vmax = 0, 1
-
+    depths = []
+    for st, grp in stations.values():
+        for rdict in grp.values():
+            for rd in rdict.values():
+                if hasattr(rd, "station_height"):
+                    depths.append(rd.station_height or 0.0)
+    depth_min = min(depths) if depths else 0
+    depth_max = max(depths) if depths else 1
     # 6) The update function: clear & redraw arrows at index i
     def update(i):
         ax.clear()
@@ -204,47 +212,50 @@ def plot_event_vectors(
         ax.add_feature(cfeature.BORDERS.with_scale("50m"), linestyle=":")
 
         for st, grp in stations.values():
-            # get station coords from surface if possible
-            base_grp = grp.get("1", next(iter(grp.values())))
-            rd0 = next(iter(base_grp.values()))
-            x0, y0 = rd0.station_long, rd0.station_lat
-
             for idx, axes in grp.items():
                 try:
-                    # get scaled values at slice i
+                    # Ensure all 3 components are present
+                    if not all(k in axes for k in ["E-W", "N-S", "U-D"]):
+                        continue
+
+                    # Get location and depth
+                    rd0 = axes["U-D"]
+                    x0 = rd0.station_long
+                    y0 = rd0.station_lat
+
+                    # Get acceleration at frame i
                     ex = axes["E-W"].to_dataframe(apply_scale=True)["acc"].iloc[i]
                     ey = axes["N-S"].to_dataframe(apply_scale=True)["acc"].iloc[i]
                     ez = axes["U-D"].to_dataframe(apply_scale=True)["acc"].iloc[i]
-                except Exception:
-                    # fallback: show simple marker
-                    m = "s" if st.type().upper() == "KIK" else "^"
-                    ax.scatter(
-                        x0,
-                        y0,
-                        marker=m,
-                        s=40,
+                    color = plt.cm.get_cmap(cmap)((ez - vmin) / (vmax - vmin))
+                    
+
+                    # Render arrow
+                    ax.quiver(
+                        x0, y0,
+                        ex, ey,
                         transform=ccrs.PlateCarree(),
-                        color="gray",
+                        angles="xy",
+                        scale_units="xy",
+                        scale=arrow_scale,
+                        color=color,
+                        alpha=0.8,
+                        label=f"{st.name} #{idx}",
                     )
-                    continue
 
-                # color map for ez
-                c = plt.cm.get_cmap(cmap)((ez - vmin) / (vmax - vmin))
-                # draw arrow
-                ax.quiver(
-                    x0,
-                    y0,
-                    ex,
-                    ey,
-                    transform=ccrs.PlateCarree(),
-                    angles="xy",
-                    scale_units="xy",
-                    scale=arrow_scale,
-                    color=c,
-                    alpha=0.8,
-                    label=f"{st.name} #{idx}",
-                )
-
+                except Exception as e:
+                    print(f"[!] Failed to draw {st.name} #{idx}: {e}")
+                    marker = "s" if st.type().upper() == "KIK" else "^"
+                    ax.scatter(
+                        rd0.station_long,
+                        rd0.station_lat,
+                        marker=marker,
+                        s=20,
+                        transform=ccrs.PlateCarree(),
+                        color="lightgray",
+                        alpha=0.3,
+                        linewidths=0
+                    )
         # epicenter
         ax.scatter(
             event.longitude,
@@ -252,17 +263,31 @@ def plot_event_vectors(
             marker="*",
             s=200,
             color="red",
+            alpha=0.3,
             transform=ccrs.PlateCarree(),
             zorder=5,
         )
-
+        from matplotlib.lines import Line2D
+        legend_elements = [
+            
+            Line2D([0], [0], marker='^', color='gray', label='KNET (fallback)', markersize=8, linestyle='None'),
+            Line2D([0], [0], marker='s', color='gray', label='KIK (fallback)', markersize=8, linestyle='None'),
+            Line2D([0], [0], marker='*', color='red', label='Epicenter', markersize=10, linestyle='None'),
+            Line2D([0], [0], color='black', lw=2, label='Acceleration vector')
+        ]
+        ax.legend(handles=legend_elements, loc='upper right')
         ax.set_title(f"Event {event.event_id} | slice {i} @ {times[i]:.2f}s")
         return ax
 
     # initial draw
     update(0)
     slider.on_changed(lambda val: update(int(val)))
-
+    norm = colors.Normalize(vmin=depth_min, vmax=depth_max)
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cbar_ax = fig.add_axes([0.9, 0.25, 0.02, 0.5])
+    cbar = fig.colorbar(sm, cax=cbar_ax)
+    cbar.set_label("Station depth (m)")
     # 7) Animation export if requested
     if animate and save_path:
         anim = animation.FuncAnimation(
