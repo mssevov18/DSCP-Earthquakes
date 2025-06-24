@@ -9,18 +9,34 @@ else:
     import termios
 
 
-# Get a single character (no Enter)
+import os
+import sys
+
 def getch():
     if os.name == "nt":
-        return msvcrt.getch().decode()
+        import msvcrt
+        first = msvcrt.getch()
+        if first in {b'\x00', b'\xe0'}:
+            second = msvcrt.getch()
+            win_to_linux_escape = {
+                b'H': '\x1b[A',  # Up arrow
+                b'P': '\x1b[B',  # Down arrow
+                b'M': '\x1b[C',  # Right arrow
+                b'K': '\x1b[D'   # Left arrow
+            }
+            return win_to_linux_escape.get(second, '')
+        else:
+            return first.decode(errors='ignore')
     else:
+        import tty
+        import termios
         fd = sys.stdin.fileno()
-        old = termios.tcgetattr(fd)
+        old_settings = termios.tcgetattr(fd)
         try:
             tty.setraw(fd)
             return sys.stdin.read(1)
         finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old)
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
 
 # Clear screen (cross-platform)
