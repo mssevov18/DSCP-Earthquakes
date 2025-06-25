@@ -269,9 +269,6 @@ def plot_event_vectors(
         )
         from matplotlib.lines import Line2D
         legend_elements = [
-            
-            Line2D([0], [0], marker='^', color='gray', label='KNET (fallback)', markersize=8, linestyle='None'),
-            Line2D([0], [0], marker='s', color='gray', label='KIK (fallback)', markersize=8, linestyle='None'),
             Line2D([0], [0], marker='*', color='red', label='Epicenter', markersize=10, linestyle='None'),
             Line2D([0], [0], color='black', lw=2, label='Acceleration vector')
         ]
